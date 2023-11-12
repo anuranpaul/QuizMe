@@ -1,36 +1,31 @@
-This is a [Next.js](https://nextjs.org/) project bootstrapped with [`create-next-app`](https://github.com/vercel/next.js/tree/canary/packages/create-next-app).
+# QuizMe
 
-## Getting Started
+## Overview
 
-First, run the development server:
+An AI-powered quiz app using Next.js, Typescript, Next-Auth, React-Query, OpenAI, Prisma, TailwindCSS.
 
-```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
-```
+## Technologies Used
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+- **NextJS**: As a boilerplate for this project.
+- **Next-auth:** Implemented Google login for authentication.
+- **Shadcn:** Used for building components in the project.
+- **Prisma:** Used as an ORM to interact with the Planetscale (MySQL) database for scaling.
+- **OpenAI API:** Utilized for generating questions based on user-specified topics.
+- **Shadcn Toast:** Used for displaying correct and incorrect counters in live scores.
+- **React Query:** Utilized for managing server data in the React application and handling state management.
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+## Features
 
-This project uses [`next/font`](https://nextjs.org/docs/basic-features/font-optimization) to automatically optimize and load Inter, a custom Google Font.
+- **Google Login:** Implemented Google authentication using Next-auth.
+- **Components:** Utilized Shadcn for building components in the project.
+- **ORM:** Used Prisma as an ORM to interact with the Planetscale (MySQL) database for scaling.
+- **History Card and Wordcloud:** Included a history card and word cloud for past quizzes.
+- **Live Scores:** Implemented correct and incorrect counters for live scores using Shadcn Toast.
+- **OpenAI API:** Integrated OpenAI API to generate questions based on user-specified topics.
+- **Question Types:** Provided the option for both Multiple Choice Questions (MCQ) and Open-ended questions.
+- **Theme Toggle:** Implemented a theme toggle for dark or light mode, with an option to sync with the system theme.
 
-## Learn More
 
-To learn more about Next.js, take a look at the following resources:
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js/) - your feedback and contributions are welcome!
 
-## Deploy on Vercel
-
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
-
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/deployment) for more details.
