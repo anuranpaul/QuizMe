@@ -1,13 +1,14 @@
 import { strict_output } from "@/lib/gpt";
 import { getAuthSession } from "@/lib/nextauth";
 import { getQuestionsSchema } from "@/schemas/questions";
+import { sanitizeTopic } from "@/lib/utils";
 import { NextResponse } from "next/server";
 import { ZodError } from "zod";
 
 export const runtime = "nodejs";
 export const maxDuration = 100;
 
-export async function POST(req: Request, res: Response) {
+export async function POST(req: Request) {
   try {
     const session = await getAuthSession();
     if (!session?.user) {
@@ -19,7 +20,8 @@ export async function POST(req: Request, res: Response) {
        );
      }
     const body = await req.json();
-    const { amount, topic, type } = getQuestionsSchema.parse(body);
+    const { amount, topic: rawTopic, type } = getQuestionsSchema.parse(body);
+    const topic = sanitizeTopic(rawTopic);
     let questions: any;
     if (type === "open_ended") {
       questions = await strict_output(

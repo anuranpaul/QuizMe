@@ -1,4 +1,4 @@
-import MCQ from "@/components/MCQ";
+import OpenEnded from "@/components/OpenEnded";
 import { prisma } from "@/lib/db";
 import { getAuthSession } from "@/lib/nextauth";
 import { redirect } from "next/navigation";
@@ -19,21 +19,22 @@ const MCQPage = async ({ params: { gameId } }: Props) => {
   const game = await prisma.game.findUnique({
     where: {
       id: gameId,
+      userId: session.user.id,
     },
     include: {
       questions: {
         select: {
           id: true,
           question: true,
-          options: true,
+          answer: true,
         },
       },
     },
   });
-  if (!game || game.gameType === "open_ended") {
+  if (!game || game.gameType === "mcq") {
     return redirect("/quiz");
   }
-  return <MCQ game={game} />;
+  return <OpenEnded game={game} />;
 };
 
 export default MCQPage;

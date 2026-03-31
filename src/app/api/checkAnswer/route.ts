@@ -3,13 +3,22 @@ import { checkAnswerSchema } from "@/schemas/questions";
 import { NextResponse } from "next/server";
 import { ZodError } from "zod";
 import stringSimilarity from "string-similarity";
+import { getAuthSession } from "@/lib/nextauth";
 
-export async function POST(req: Request, res: Response) {
+export async function POST(req: Request) {
   try {
     const body = await req.json();
     const { questionId, userInput } = checkAnswerSchema.parse(body);
+    const session = await getAuthSession();
+    if (!session?.user) {
+      return NextResponse.json(
+        { message: "You must be logged in" },
+        { status: 401 }
+      );
+    }
     const question = await prisma.question.findUnique({
       where: { id: questionId },
+      include: { game: true },
     });
     if (!question) {
       return NextResponse.json(
@@ -19,6 +28,12 @@ export async function POST(req: Request, res: Response) {
         {
           status: 404,
         }
+      );
+    }
+    if (question.game.userId !== session.user.id) {
+      return NextResponse.json(
+        { message: "You are not authorized to answer this question" },
+        { status: 403 }
       );
     }
     await prisma.question.update({

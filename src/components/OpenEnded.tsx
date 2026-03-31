@@ -43,11 +43,12 @@ const OpenEnded = ({ game }: Props) => {
   });
   const { toast } = useToast();
   const [now, setNow] = React.useState(new Date());
-  const { mutate: checkAnswer, isLoading: isChecking } = useMutation({
+  const { mutate: checkAnswer, isPending: isChecking } = useMutation({
     mutationFn: async () => {
       let filledAnswer = blankAnswer;
-      document.querySelectorAll("#user-blank-input").forEach((input) => {
-        filledAnswer = filledAnswer.replace("_____", input.value);
+      document.querySelectorAll<HTMLInputElement>("#user-blank-input").forEach((input) => {
+        const sanitized = input.value.replace(/[<>"'&]/g, "");
+        filledAnswer = filledAnswer.replace("_____", sanitized);
         input.value = "";
       });
       const payload: z.infer<typeof checkAnswerSchema> = {

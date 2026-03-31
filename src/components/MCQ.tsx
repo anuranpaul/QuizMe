@@ -40,11 +40,17 @@ const MCQ = ({ game }: Props) => {
   const options = React.useMemo(() => {
     if (!currentQuestion) return [];
     if (!currentQuestion.options) return [];
-    return JSON.parse(currentQuestion.options as string) as string[];
+    try {
+      const parsed = JSON.parse(currentQuestion.options as string);
+      if (!Array.isArray(parsed) || !parsed.every((o) => typeof o === "string")) return [];
+      return parsed as string[];
+    } catch {
+      return [];
+    }
   }, [currentQuestion]);
 
   const { toast } = useToast();
-  const { mutate: checkAnswer, isLoading: isChecking } = useMutation({
+  const { mutate: checkAnswer, isPending: isChecking } = useMutation({
     mutationFn: async () => {
       const payload: z.infer<typeof checkAnswerSchema> = {
         questionId: currentQuestion.id,
@@ -85,7 +91,7 @@ const MCQ = ({ game }: Props) => {
           toast({
             title: "Correct",
             description: "You got it right!",
-            variant: "success",
+            variant: "default",
           });
         } else {
           setStats((stats) => ({

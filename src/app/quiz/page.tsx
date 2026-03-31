@@ -10,12 +10,13 @@ export const metadata = {
 };
 
 interface Props {
-  searchParams: {
+  searchParams: Promise<{
     topic?: string;
-  };
+  }>;
 }
 
-const Quiz = async ({ searchParams }: Props) => {
+const Quiz = async (props: Props) => {
+  const searchParams = await props.searchParams;
   const session = await getAuthSession();
   if (!session?.user) {
     redirect("/");

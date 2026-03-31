@@ -19,6 +19,7 @@ const MCQPage = async ({ params: { gameId } }: Props) => {
   const game = await prisma.game.findUnique({
     where: {
       id: gameId,
+      userId: session.user.id,
     },
     include: {
       questions: {

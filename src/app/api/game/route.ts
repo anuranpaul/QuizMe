@@ -1,11 +1,13 @@
 import { prisma } from "@/lib/db";
 import { getAuthSession } from "@/lib/nextauth";
 import { quizCreationSchema } from "@/schemas/forms/quiz";
+import { sanitizeTopic } from "@/lib/utils";
 import { NextResponse } from "next/server";
 import { z } from "zod";
-import axios from "axios";
+import { strict_output } from "@/lib/gpt";
 
-export async function POST(req: Request, res: Response) {
+export const maxDuration = 100;
+export async function POST(req: Request) {
   try {
     const session = await getAuthSession();
     if (!session?.user) {
@@ -17,7 +19,8 @@ export async function POST(req: Request, res: Response) {
       );
     }
     const body = await req.json();
-    const { topic, type, amount } = quizCreationSchema.parse(body);
+    const { topic: rawTopic, type, amount } = quizCreationSchema.parse(body);
+    const topic = sanitizeTopic(rawTopic);
     const game = await prisma.game.create({
       data: {
         gameType: type,
@@ -41,14 +44,33 @@ export async function POST(req: Request, res: Response) {
       },
     });
 
-    const { data } = await axios.post(
-      `${process.env.API_URL as string}/api/questions`,
-      {
-        amount,
-        topic,
-        type,
-      }
-    );
+    let questionsData: any;
+    if (type === "open_ended") {
+      questionsData = await strict_output(
+        "You are a helpful AI that is able to generate a pair of question and answers, the length of each answer should not be more than 15 words, store all the pairs of answers and questions in a JSON array",
+        new Array(amount).fill(
+          `You are to generate a random hard open-ended questions about ${topic}`
+        ),
+        {
+          question: "question",
+          answer: "answer with max length of 15 words",
+        }
+      );
+    } else if (type === "mcq") {
+      questionsData = await strict_output(
+        "You are a helpful AI that is able to generate mcq questions and answers, the length of each answer should not be more than 15 words, store all answers and questions and options in a JSON array",
+        new Array(amount).fill(
+          `You are to generate a random hard mcq question about ${topic}`
+        ),
+        {
+           question: "question",
+           answer: "answer with max length of 15 words",
+           option1: "option1 with max length of 15 words",
+           option2: "option2 with max length of 15 words",
+           option3: "option3 with max length of 15 words",
+        }
+      );
+    }
 
     if (type === "mcq") {
       type mcqQuestion = {
@@ -59,7 +81,7 @@ export async function POST(req: Request, res: Response) {
         option3: string;
       };
 
-      const manyData = data.questions.map((question: mcqQuestion) => {
+      const manyData = questionsData.map((question: mcqQuestion) => {
         // mix up the options lol
         const options = [
           question.option1,
@@ -85,7 +107,7 @@ export async function POST(req: Request, res: Response) {
         answer: string;
       };
       await prisma.question.createMany({
-        data: data.questions.map((question: openQuestion) => {
+        data: questionsData.map((question: openQuestion) => {
           return {
             question: question.question,
             answer: question.answer,
@@ -115,7 +137,7 @@ export async function POST(req: Request, res: Response) {
     }
   }
 }
-export async function GET(req: Request, res: Response) {
+export async function GET(req: Request) {
   try {
     const session = await getAuthSession();
     if (!session?.user) {
@@ -142,7 +164,13 @@ export async function GET(req: Request, res: Response) {
         id: gameId,
       },
       include: {
-        questions: true,
+        questions: {
+          select: {
+            id: true,
+            question: true,
+            options: true,
+          },
+        },
       },
     });
     if (!game) {
@@ -153,11 +181,17 @@ export async function GET(req: Request, res: Response) {
         }
       );
     }
+    if (game.userId !== session.user.id) {
+      return NextResponse.json(
+        { error: "You are not authorized to view this game." },
+        { status: 403 }
+      );
+    }
 
     return NextResponse.json(
       { game },
       {
-        status: 400,
+        status: 200,
       }
     );
   } catch (error) {

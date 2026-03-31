@@ -5,6 +5,10 @@ export function cn(...inputs: ClassValue[]) {
   return twMerge(clsx(inputs));
 }
 
+export function sanitizeTopic(topic: string): string {
+  return topic.replace(/[^a-zA-Z0-9 .,'-]/g, "").trim();
+}
+
 export function formatTimeDelta(seconds: number) {
   const hours = Math.floor(seconds / 3600);
   const minutes = Math.floor((seconds - hours * 3600) / 60);

@@ -29,6 +29,9 @@ const Statistics = async ({ params: { gameId } }: Props) => {
   if (!game) {
     return redirect("/");
   }
+  if (game.userId !== session.user.id) {
+    return redirect("/");
+  }
 
   let accuracy: number = 0;
 
