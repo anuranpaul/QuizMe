@@ -58,6 +58,7 @@ export async function strict_output(
     const response = await openai.chat.completions.create({
         temperature: temperature,
         model: model,
+        max_tokens: 1500,
         messages: [
           {
             role: 'system',

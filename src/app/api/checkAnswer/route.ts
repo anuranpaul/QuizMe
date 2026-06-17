@@ -18,7 +18,15 @@ export async function POST(req: Request) {
     }
     const question = await prisma.question.findUnique({
       where: { id: questionId },
-      include: { game: true },
+      select: {
+        questionType: true,
+        answer: true,
+        game: {
+          select: {
+            userId: true,
+          },
+        },
+      },
     });
     if (!question) {
       return NextResponse.json(
@@ -36,16 +44,13 @@ export async function POST(req: Request) {
         { status: 403 }
       );
     }
-    await prisma.question.update({
-      where: { id: questionId },
-      data: { userAnswer: userInput },
-    });
+
     if (question.questionType === "mcq") {
       const isCorrect =
         question.answer.toLowerCase().trim() === userInput.toLowerCase().trim();
       await prisma.question.update({
         where: { id: questionId },
-        data: { isCorrect },
+        data: { isCorrect, userAnswer: userInput },
       });
       return NextResponse.json({
         isCorrect,
@@ -58,7 +63,7 @@ export async function POST(req: Request) {
       percentageSimilar = Math.round(percentageSimilar * 100);
       await prisma.question.update({
         where: { id: questionId },
-        data: { percentageCorrect: percentageSimilar },
+        data: { percentageCorrect: percentageSimilar, userAnswer: userInput },
       });
       return NextResponse.json({
         percentageSimilar,
@@ -67,13 +72,13 @@ export async function POST(req: Request) {
   } catch (error) {
     if (error instanceof ZodError) {
       return NextResponse.json(
-        {
-          message: error.issues,
-        },
-        {
-          status: 400,
-        }
+        { message: error.issues },
+        { status: 400 }
       );
     }
+    return NextResponse.json(
+      { message: "Internal Server Error" },
+      { status: 500 }
+    );
   }
 }

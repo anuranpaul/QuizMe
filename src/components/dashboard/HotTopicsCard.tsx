@@ -12,7 +12,12 @@ import { prisma } from "@/lib/db";
 type Props = {};
 
 const HotTopicsCard = async (props: Props) => {
-  const topics = await prisma.topic_count.findMany({});
+  const topics = await prisma.topicCount.findMany({
+    take: 50,
+    orderBy: {
+      count: "desc",
+    },
+  });
   const formattedTopics = topics.map((topic: { topic: any; count: any; }) => {
     return {
       text: topic.topic,

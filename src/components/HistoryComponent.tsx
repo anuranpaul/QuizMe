@@ -18,6 +18,12 @@ const HistoryComponent = async ({ limit, userId }: Props) => {
     orderBy: {
       timeStarted: "desc",
     },
+    select: {
+      id: true,
+      timeEnded: true,
+      topic: true,
+      gameType: true,
+    },
   });
   return (
     <div className="space-y-8">

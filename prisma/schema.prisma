@@ -70,10 +70,12 @@ model Game {
   @@index([timeStarted])
 }
 
-model topic_count {
+model TopicCount {
   id    String @id @default(cuid())
   topic String @unique
   count Int
+
+  @@map("topic_count")
 }
 
 model Question {
@@ -90,4 +92,5 @@ model Question {
   game Game @relation(fields: [gameId], references: [id])
 
   @@index([gameId])
+  @@index([gameId, questionType])
 }

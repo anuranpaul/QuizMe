@@ -21,29 +21,6 @@ export async function POST(req: Request) {
     const body = await req.json();
     const { topic: rawTopic, type, amount } = quizCreationSchema.parse(body);
     const topic = sanitizeTopic(rawTopic);
-    const game = await prisma.game.create({
-      data: {
-        gameType: type,
-        timeStarted: new Date(),
-        userId: session.user.id,
-        topic,
-      },
-    });
-    await prisma.topic_count.upsert({
-      where: {
-        topic,
-      },
-      create: {
-        topic,
-        count: 1,
-      },
-      update: {
-        count: {
-          increment: 1,
-        },
-      },
-    });
-
     let questionsData: any;
     if (type === "open_ended") {
       questionsData = await strict_output(
@@ -72,51 +49,70 @@ export async function POST(req: Request) {
       );
     }
 
-    if (type === "mcq") {
-      type mcqQuestion = {
-        question: string;
-        answer: string;
-        option1: string;
-        option2: string;
-        option3: string;
-      };
+    const game = await prisma.$transaction(async (tx) => {
+      const g = await tx.game.create({
+        data: {
+          gameType: type,
+          timeStarted: new Date(),
+          userId: session.user.id,
+          topic,
+        },
+      });
 
-      const manyData = questionsData.map((question: mcqQuestion) => {
-        // mix up the options lol
-        const options = [
-          question.option1,
-          question.option2,
-          question.option3,
-          question.answer,
-        ].sort(() => Math.random() - 0.5);
-        return {
-          question: question.question,
-          answer: question.answer,
-          options: JSON.stringify(options),
-          gameId: game.id,
-          questionType: "mcq",
+      await tx.topicCount.upsert({
+        where: { topic },
+        create: { topic, count: 1 },
+        update: { count: { increment: 1 } },
+      });
+
+      if (type === "mcq") {
+        type mcqQuestion = {
+          question: string;
+          answer: string;
+          option1: string;
+          option2: string;
+          option3: string;
         };
-      });
 
-      await prisma.question.createMany({
-        data: manyData,
-      });
-    } else if (type === "open_ended") {
-      type openQuestion = {
-        question: string;
-        answer: string;
-      };
-      await prisma.question.createMany({
-        data: questionsData.map((question: openQuestion) => {
+        const manyData = questionsData.map((question: mcqQuestion) => {
+          const options = [
+            question.option1,
+            question.option2,
+            question.option3,
+            question.answer,
+          ].sort(() => Math.random() - 0.5);
           return {
             question: question.question,
             answer: question.answer,
-            gameId: game.id,
+            options: JSON.stringify(options),
+            gameId: g.id,
+            questionType: "mcq",
+          };
+        });
+
+        await tx.question.createMany({
+          data: manyData,
+        });
+      } else if (type === "open_ended") {
+        type openQuestion = {
+          question: string;
+          answer: string;
+        };
+        const manyData = questionsData.map((question: openQuestion) => {
+          return {
+            question: question.question,
+            answer: question.answer,
+            gameId: g.id,
             questionType: "open_ended",
           };
-        }),
-      });
-    }
+        });
+        await tx.question.createMany({
+          data: manyData,
+        });
+      }
+
+      return g;
+    });
 
     return NextResponse.json({ gameId: game.id }, { status: 200 });
   } catch (error) {

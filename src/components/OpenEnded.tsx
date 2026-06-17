@@ -75,7 +75,7 @@ const OpenEnded = ({ game }: Props) => {
           title: `Your answer is ${percentageSimilar}% similar to the correct answer`,
         });
         setAveragePercentage((prev) => {
-          return (prev + percentageSimilar) / (questionIndex + 1);
+          return (prev * questionIndex + percentageSimilar) / (questionIndex + 1);
         });
         if (questionIndex === game.questions.length - 1) {
           endGame();
