@@ -6,7 +6,7 @@ import { NextResponse } from "next/server";
 import { z } from "zod";
 import { strict_output } from "@/lib/gpt";
 
-export const maxDuration = 100;
+export const maxDuration = 60;
 export async function POST(req: Request) {
   try {
     const session = await getAuthSession();
